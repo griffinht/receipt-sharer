@@ -1,9 +1,10 @@
+import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 
 const app = new Hono()
 
 
-app.get('/receiptify', (c) => {
+app.get('/receipt', (c) => {
   const groceryItems = [
     { name: 'Apples', quantity: 3, price: 1.50 },
     { name: 'Bread', quantity: 1, price: 2.00 },
@@ -55,4 +56,11 @@ app.get('/receiptify', (c) => {
   `)
 })
 
-export default app
+//#export default app
+const port = 3001
+console.log(`Server is running on port ${port}`)
+
+serve({
+  fetch: app.fetch,
+  port
+})
