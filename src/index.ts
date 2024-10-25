@@ -3,60 +3,75 @@ import { Hono } from 'hono'
 
 const app = new Hono()
 
+interface ReceiptItem {
+  name: string
+  genericName: string
+  price: number
+  department: string
+}
 
-app.get('/receipt', (c) => {
-  const groceryItems = [
-    { name: 'Apples', quantity: 3, price: 1.50 },
-    { name: 'Bread', quantity: 1, price: 2.00 },
-    { name: 'Milk', quantity: 2, price: 4.00 },
-    { name: 'Eggs', quantity: 1, price: 3.50 },
-    { name: 'Cheese', quantity: 1, price: 5.00 },
-  ]
+interface Receipt {
+  id: string
+  store: string
+  date: string
+  items: ReceiptItem[]
+  total: number
+}
 
-  const totalItems = groceryItems.reduce((sum, item) => sum + item.quantity, 0)
-  const totalAmount = groceryItems.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
+app.get('/receipts/:id', async (c) => {
+  const id = c.req.param('id')
+  
+  try {
+    const response = await fetch(`http://localhost:3000/receipts/${id}/json`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    const receipt: Receipt = await response.json()
 
-  const currentDate = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+    const totalItems = receipt.items.length
 
-  return c.html(`
-    <style>
-      body {
-        font-family: monospace;
-        text-align: center;
-        background-image: url('https://receiptify.herokuapp.com/wrinkled-paper-texture-7.jpg');
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-      }
-      h1 { text-transform: uppercase; }
-      table { margin: 0 auto; }
-      th, td { padding: 5px 10px; text-align: left; }
-    </style>
-    <h1>Grocerify</h1>
-    <h2>Weekly Grocery Receipt</h2>
-    <p>ORDER #${Math.floor(Math.random() * 10000).toString().padStart(4, '0')} FOR CUSTOMER</p>
-    <p>${currentDate}</p>
-    <table>
-      <tr><th>QTY</th><th>ITEM</th><th>AMT</th></tr>
-      ${groceryItems.map(item => `
-        <tr>
-          <td>${item.quantity}</td>
-          <td>${item.name.toUpperCase()}</td>
-          <td>$${(item.price * item.quantity).toFixed(2)}</td>
-        </tr>
-      `).join('')}
-    </table>
-    <p>ITEM COUNT: ${totalItems}</p>
-    <p>TOTAL: $${totalAmount}</p>
-    <p>CARD #: **** **** **** ${Math.floor(Math.random() * 10000)}</p>
-    <p>AUTH CODE: ${Math.floor(Math.random() * 1000000)}</p>
-    <p>CARDHOLDER: CUSTOMER</p>
-    <p>THANK YOU FOR SHOPPING WITH US!</p>
-    <p><small>grocerify.example.com</small></p>
-  `)
+    return c.html(`
+      <style>
+        body {
+          font-family: monospace;
+          text-align: center;
+          background-image: url('https://receiptify.herokuapp.com/wrinkled-paper-texture-7.jpg');
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-attachment: fixed;
+        }
+        h1 { text-transform: uppercase; }
+        table { margin: 0 auto; }
+        th, td { padding: 5px 10px; text-align: left; }
+      </style>
+      <h1>${receipt.store}</h1>
+      <h2>Receipt</h2>
+      <p>ORDER #${receipt.id} FOR CUSTOMER</p>
+      <p>${new Date(receipt.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      <table>
+        <tr><th>QTY</th><th>ITEM</th><th>AMT</th></tr>
+        ${receipt.items.map(item => `
+          <tr>
+            <td>1</td>
+            <td>${item.name.toUpperCase()}</td>
+            <td>$${item.price.toFixed(2)}</td>
+          </tr>
+        `).join('')}
+      </table>
+      <p>ITEM COUNT: ${totalItems}</p>
+      <p>TOTAL: $${receipt.total.toFixed(2)}</p>
+      <p>CARD #: **** **** **** ${Math.floor(Math.random() * 10000)}</p>
+      <p>AUTH CODE: ${Math.floor(Math.random() * 1000000)}</p>
+      <p>CARDHOLDER: CUSTOMER</p>
+      <p>THANK YOU FOR SHOPPING WITH US!</p>
+      <p><small>${receipt.store.toLowerCase().replace(/\s+/g, '')}.example.com</small></p>
+    `)
+  } catch (error) {
+    console.error('Error fetching receipt:', error)
+    return c.text('Error fetching receipt', 500)
+  }
 })
 
-//#export default app
 const port = 3001
 console.log(`Server is running on port ${port}`)
 
