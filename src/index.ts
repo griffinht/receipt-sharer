@@ -22,7 +22,7 @@ app.get('/receipts/:id', async (c) => {
   const id = c.req.param('id')
   
   try {
-    const response = await fetch(`http://localhost:3000/receipts/${id}/json`)
+    const response = await fetch(`http://localhost:3000/api/receipts/${id}/json`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
