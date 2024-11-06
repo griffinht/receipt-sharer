@@ -1,5 +1,6 @@
 services:
   app:
     build: .
-    ports:
-      - "3001:3001"
+    network_mode: host
+#    ports:
+#      - "3001:3001"
